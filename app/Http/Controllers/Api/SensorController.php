@@ -8,6 +8,14 @@ use App\Models\SensorLog;
 
 class SensorController extends Controller
 {
+    public function index()
+    {
+        $currentStatus = SensorLog::latest()->first();
+        $historyLogs = SensorLog::latest()->take(10)->get();
+
+        return view('dashboard', compact('currentStatus', 'historyLogs'));
+    }
+    
     public function store(Request $request)
     {
         // 1. Validasi format data yang masuk
