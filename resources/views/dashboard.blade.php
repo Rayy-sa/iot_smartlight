@@ -75,5 +75,12 @@
 
     </div>
 
+<script>
+        // Halaman akan dimuat ulang secara otomatis setiap 5 detik (5000 milidetik)
+        setTimeout(function() {
+            window.location.reload();
+        }, 5000);
+    </script>
 </body>
 </html>
+
