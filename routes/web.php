@@ -18,4 +18,9 @@ Route::get('/clear-cache', function () {
     Artisan::call('cache:clear');
     Artisan::call('view:clear');
     return 'Semua cache berhasil dibersihkan! Silakan buka /dashboard kembali.';
+
+});
+
+Route::get('/ping', function () {
+    return 'PONG! File web.php berhasil di-update di Railway!';
 });
