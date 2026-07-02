@@ -5,11 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SensorLog;
-use Illuminate\Support\Facades\Http; // Wajib ada untuk mengirim pesan Telegram
+use Illuminate\Support\Facades\Http;
 
 class SensorController extends Controller
 {
-    // FUNGSI 1: Untuk menyajikan tampilan UI Dashboard di Web
     public function index()
     {
         $currentStatus = SensorLog::latest()->first();
@@ -18,29 +17,40 @@ class SensorController extends Controller
         return view('dashboard', compact('currentStatus', 'historyLogs'));
     }
 
-    // FUNGSI 2: Untuk menerima data dari ESP32 (Wokwi) dan kirim Notif
     public function store(Request $request)
     {
-        // 1. Validasi format data yang masuk
         $request->validate([
             'nilai_cahaya' => 'required|integer',
             'status_lampu' => 'required|integer',
         ]);
 
-        // 2. Simpan ke database PostgreSQL (Supabase)
+        // 1. AMBIL DATA TERAKHIR di database SEBELUM menyimpan data baru
+        $previousLog = SensorLog::latest()->first();
+
+        // 2. Simpan data baru dari Wokwi
         $log = SensorLog::create([
             'nilai_cahaya' => $request->nilai_cahaya,
             'status_lampu' => $request->status_lampu,
         ]);
 
-        // 3. LOGIKA NOTIFIKASI TELEGRAM
-        // Kirim pesan hanya jika lampu menyala (status = 1)
-        if ($request->status_lampu == 1) {
+        // 3. LOGIKA NOTIFIKASI PINTAR
+        // Pesan HANYA dikirim jika belum ada data sama sekali, 
+        // ATAU jika status lampu saat ini BERBEDA dengan status lampu sebelumnya.
+        if (!$previousLog || $previousLog->status_lampu != $request->status_lampu) {
+            
             $token = env('TELEGRAM_BOT_TOKEN');
             $chatId = env('TELEGRAM_CHAT_ID');
-            $pesan = "🌙 *Peringatan IoT:* Hari sudah mulai gelap. Lampu jalan telah OTOMATIS DINYALAKAN!\n\n💡 Intensitas Cahaya: " . $request->nilai_cahaya;
 
-            // Menembak API Telegram
+            // Jika berubah menjadi MALAM (Lampu Menyala)
+            if ($request->status_lampu == 1) {
+                $pesan = "🌙 *Peringatan :* Hari sudah mulai gelap. Lampu jalan telah OTOMATIS DINYALAKAN!\n\n💡 Intensitas Cahaya: " . $request->nilai_cahaya;
+            } 
+            // Jika berubah menjadi SIANG (Lampu Mati)
+            else {
+                $pesan = "☀️ *Peringatan :* Hari sudah mulai terang. Lampu jalan telah OTOMATIS DIMATIKAN!\n\n💡 Intensitas Cahaya: " . $request->nilai_cahaya;
+            }
+
+            // Kirim ke Telegram
             Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
                 'chat_id' => $chatId,
                 'text' => $pesan,
@@ -48,7 +58,6 @@ class SensorController extends Controller
             ]);
         }
 
-        // 4. Kirim respon balik ke ESP32
         return response()->json([
             'status' => 'success',
             'message' => 'Data IoT berhasil disimpan!',
