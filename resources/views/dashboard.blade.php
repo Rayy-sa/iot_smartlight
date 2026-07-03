@@ -46,7 +46,10 @@
             <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 text-center">
                 <h2 class="text-slate-400 text-sm font-semibold mb-3 tracking-wider">WAKTU SISTEM</h2>
                 <span class="text-5xl mb-2">🕒</span>
-                <p class="text-white font-bold text-3xl my-1">{{ str_pad($currentStatus->jam ?? 0, 2, '0', STR_PAD_LEFT) }}:00</p>
+                                @php 
+                    $waktuAktual = str_pad($currentStatus->jam ?? 0, 4, '0', STR_PAD_LEFT); 
+                @endphp
+                <p class="text-white font-bold text-3xl my-1">{{ substr($waktuAktual, 0, 2) }}:{{ substr($waktuAktual, 2, 2) }}</p>
                 <p class="text-xs text-slate-500 font-mono">WIB (NTP Sync)</p>
             </div>
         </div>
@@ -70,7 +73,10 @@
                         @forelse($historyLogs as $log)
                         <tr class="hover:bg-slate-700/40 transition-colors duration-200">
                             <td class="px-8 py-4 font-mono text-slate-400">{{ $log->created_at->format('H:i:s') }}</td>
-                            <td class="px-8 py-4 font-mono">{{ str_pad($log->jam, 2, '0', STR_PAD_LEFT) }}:00</td>
+                                                        @php 
+                                $waktuLog = str_pad($log->jam, 4, '0', STR_PAD_LEFT); 
+                            @endphp
+                            <td class="px-8 py-4 font-mono">{{ substr($waktuLog, 0, 2) }}:{{ substr($waktuLog, 2, 2) }}</td>
                             <td class="px-8 py-4 font-mono text-blue-300">{{ $log->nilai_cahaya }}</td>
                             <td class="px-8 py-4">
                                 @if($log->is_hujan == 1)
