@@ -3,84 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Lampu Jalan</title>
+    <title>Dashboard Smart Street Light</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-200 min-h-screen font-sans antialiased p-6">
+<body class="bg-slate-900 text-white font-sans min-h-screen p-8">
+    <div class="max-w-5xl mx-auto">
+        <div class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-blue-400 tracking-wide">IoT Smart Street Light</h1>
+            <p class="text-slate-400 mt-2 text-lg">Real-time Environmental Monitoring Dashboard</p>
+        </div>
 
-    <div class="max-w-4xl mx-auto">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-blue-400">Monitoring IoT Smart Light</h1>
-            <p class="text-slate-400 mt-2">Pemantauan Intensitas Cahaya LDR secara Real-time</p>
-        </header>
-
-        @if($currentStatus)
-            <div class="flex justify-center mb-10">
-                <div class="w-full max-w-sm rounded-2xl shadow-lg p-8 text-center transition-all duration-300 {{ $currentStatus->status_lampu == 1 ? 'bg-indigo-950 border border-indigo-700' : 'bg-blue-900 border border-blue-500' }}">
-                    
-                    <h2 class="text-xl font-semibold text-slate-300 mb-2">Kondisi Saat Ini</h2>
-                    
-                    @if($currentStatus->status_lampu == 1)
-                        <div class="text-5xl font-bold text-indigo-300 mb-2">MALAM 🌙</div>
-                        <p class="text-lg text-indigo-200">Lampu Menyala</p>
-                    @else
-                        <div class="text-5xl font-bold text-yellow-300 mb-2">SIANG ☀️</div>
-                        <p class="text-lg text-blue-200">Lampu Padam</p>
-                    @endif
-
-                    <div class="mt-6 inline-block bg-slate-950 px-4 py-2 rounded-lg text-sm text-slate-400">
-                        Intensitas Cahaya: <span class="text-white font-mono">{{ $currentStatus->nilai_cahaya }}</span>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 text-center">
+                <h2 class="text-slate-400 text-sm font-semibold mb-3 tracking-wider">STATUS LAMPU</h2>
+                @if($currentStatus && $currentStatus->status_lampu == 1)
+                    <span class="text-5xl mb-2">💡</span>
+                    <p class="text-green-400 font-bold text-2xl drop-shadow-md">MENYALA</p>
+                @else
+                    <span class="text-5xl mb-2 filter grayscale opacity-50">💡</span>
+                    <p class="text-slate-500 font-bold text-2xl">MATI</p>
+                @endif
             </div>
 
-            <div class="bg-slate-800 rounded-xl shadow-md overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-700">
-                    <h3 class="text-lg font-semibold text-white">Riwayat Pemantauan</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-700 text-slate-300">
-                            <tr>
-                                <th class="px-6 py-3">Waktu Masuk</th>
-                                <th class="px-6 py-3">Nilai LDR</th>
-                                <th class="px-6 py-3">Status Lampu</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-700">
-                            @foreach($historyLogs as $log)
-                            <tr class="hover:bg-slate-700/50 transition-colors">
-                                <td class="px-6 py-4 text-slate-400">{{ $log->created_at->format('d M Y, H:i:s') }}</td>
-                                <td class="px-6 py-4 font-mono">{{ $log->nilai_cahaya }}</td>
-                                <td class="px-6 py-4">
-                                    @if($log->status_lampu == 1)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300">
-                                            HIDUP
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
-                                            MATI
-                                        </span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 text-center">
+                <h2 class="text-slate-400 text-sm font-semibold mb-3 tracking-wider">INTENSITAS CAHAYA</h2>
+                <span class="text-4xl mb-2">🌤️</span>
+                <p class="text-3xl font-bold text-blue-300 my-1">{{ $currentStatus->nilai_cahaya ?? 0 }}</p>
+                <p class="text-xs text-slate-500 font-mono">LUX / ADC Value</p>
             </div>
-        @else
-            <div class="text-center text-slate-500 mt-20">Belum ada data sensor yang masuk. Coba jalankan simulasi Wokwi.</div>
-        @endif
 
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 text-center">
+                <h2 class="text-slate-400 text-sm font-semibold mb-3 tracking-wider">KONDISI CUACA</h2>
+                @if($currentStatus && $currentStatus->is_hujan == 1)
+                    <span class="text-5xl mb-2">🌧️</span>
+                    <p class="text-blue-400 font-bold text-2xl">HUJAN</p>
+                @else
+                    <span class="text-5xl mb-2">☀️</span>
+                    <p class="text-yellow-400 font-bold text-2xl">CERAH</p>
+                @endif
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 text-center">
+                <h2 class="text-slate-400 text-sm font-semibold mb-3 tracking-wider">WAKTU SISTEM</h2>
+                <span class="text-5xl mb-2">🕒</span>
+                <p class="text-white font-bold text-3xl my-1">{{ str_pad($currentStatus->jam ?? 0, 2, '0', STR_PAD_LEFT) }}:00</p>
+                <p class="text-xs text-slate-500 font-mono">WIB (NTP Sync)</p>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden">
+            <div class="px-8 py-5 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+                <h3 class="font-bold text-xl text-slate-200">Riwayat Sinkronisasi Terbaru</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900/80 text-slate-400 font-semibold tracking-wide">
+                        <tr>
+                            <th class="px-8 py-4">Waktu Terima Data</th>
+                            <th class="px-8 py-4">Jam (NTP)</th>
+                            <th class="px-8 py-4">Nilai LDR</th>
+                            <th class="px-8 py-4">Status Cuaca</th>
+                            <th class="px-8 py-4">Aktuator Lampu</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        @forelse($historyLogs as $log)
+                        <tr class="hover:bg-slate-700/40 transition-colors duration-200">
+                            <td class="px-8 py-4 font-mono text-slate-400">{{ $log->created_at->format('H:i:s') }}</td>
+                            <td class="px-8 py-4 font-mono">{{ str_pad($log->jam, 2, '0', STR_PAD_LEFT) }}:00</td>
+                            <td class="px-8 py-4 font-mono text-blue-300">{{ $log->nilai_cahaya }}</td>
+                            <td class="px-8 py-4">
+                                @if($log->is_hujan == 1)
+                                    <span class="flex items-center text-blue-400">🌧️ Hujan</span>
+                                @else
+                                    <span class="flex items-center text-yellow-400">☀️ Cerah</span>
+                                @endif
+                            </td>
+                            <td class="px-8 py-4">
+                                @if($log->status_lampu == 1)
+                                    <span class="text-green-400">Menyala</span>
+                                @else
+                                    <span class="text-slate-400">Mati</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-8 py-10 text-center text-slate-500 italic">Menunggu transmisi data pertama...</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-<script>
-        // Halaman akan dimuat ulang secara otomatis setiap 5 detik (5000 milidetik)
-        setTimeout(function() {
-            window.location.reload();
-        }, 5000);
+    <script>
+        setTimeout(function() { window.location.reload(); }, 5000);
     </script>
 </body>
 </html>
-

@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class SensorLog extends Model
 {
-    protected $fillable = ['nilai_cahaya', 'status_lampu'];
+    protected $fillable = ['nilai_cahaya', 'status_lampu', 'is_hujan', 'jam'];
 }

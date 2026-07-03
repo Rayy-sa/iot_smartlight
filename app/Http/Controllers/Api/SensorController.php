@@ -22,35 +22,38 @@ class SensorController extends Controller
         $request->validate([
             'nilai_cahaya' => 'required|integer',
             'status_lampu' => 'required|integer',
+            'is_hujan' => 'required|integer',
+            'jam' => 'required|integer',
         ]);
 
-        // 1. AMBIL DATA TERAKHIR di database SEBELUM menyimpan data baru
         $previousLog = SensorLog::latest()->first();
 
-        // 2. Simpan data baru dari Wokwi
         $log = SensorLog::create([
             'nilai_cahaya' => $request->nilai_cahaya,
             'status_lampu' => $request->status_lampu,
+            'is_hujan' => $request->is_hujan,
+            'jam' => $request->jam,
         ]);
 
-        // 3. LOGIKA NOTIFIKASI PINTAR
-        // Pesan HANYA dikirim jika belum ada data sama sekali, 
-        // ATAU jika status lampu saat ini BERBEDA dengan status lampu sebelumnya.
         if (!$previousLog || $previousLog->status_lampu != $request->status_lampu) {
-            
             $token = env('TELEGRAM_BOT_TOKEN');
             $chatId = env('TELEGRAM_CHAT_ID');
+            $pesan = "";
 
-            // Jika berubah menjadi MALAM (Lampu Menyala)
-            if ($request->status_lampu == 1) {
-                $pesan = "🌙 *Peringatan :* Hari sudah mulai gelap. Lampu jalan telah OTOMATIS DINYALAKAN!\n\n💡 Intensitas Cahaya: " . $request->nilai_cahaya;
-            } 
-            // Jika berubah menjadi SIANG (Lampu Mati)
-            else {
-                $pesan = "☀️ *Peringatan :* Hari sudah mulai terang. Lampu jalan telah OTOMATIS DIMATIKAN!\n\n💡 Intensitas Cahaya: " . $request->nilai_cahaya;
+            if ($request->status_lampu == 1) { 
+                if ($request->jam >= 6 && $request->jam <= 17 && $request->is_hujan == 1) {
+                    $pesan = "⚠️ *Peringatan Cuaca Buruk:* Jarak pandang menurun drastis akibat hujan di siang hari. Lampu jalan AKTIF untuk keselamatan lalu lintas.\n\n💡 Cahaya: " . $request->nilai_cahaya;
+                } else {
+                    $pesan = "🌙 *Transisi Malam:* Waktu malam telah tiba. Lampu jalan telah OTOMATIS DINYALAKAN.\n\n💡 Cahaya: " . $request->nilai_cahaya;
+                }
+            } else { 
+                if ($request->is_hujan == 1) {
+                    $pesan = "🌦️ *Informasi Cuaca:* Terdeteksi hujan panas (hujan saat langit cerah). Jarak pandang aman, lampu jalan TETAP DIMATIKAN untuk efisiensi energi.\n\n💡 Cahaya: " . $request->nilai_cahaya;
+                } else {
+                    $pesan = "☀️ *Transisi Siang:* Hari sudah terang dan cuaca cerah. Lampu jalan telah OTOMATIS DIMATIKAN.\n\n💡 Cahaya: " . $request->nilai_cahaya;
+                }
             }
 
-            // Kirim ke Telegram
             Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
                 'chat_id' => $chatId,
                 'text' => $pesan,
@@ -60,7 +63,6 @@ class SensorController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Data IoT berhasil disimpan!',
             'data' => $log
         ], 201);
     }
